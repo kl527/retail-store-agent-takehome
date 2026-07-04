@@ -1,0 +1,13 @@
+name: v04-over-return-guard
+description: >
+  O-1006 sold 2 Navy-L hoodies and 1 was already returned in May — returning
+  two more is impossible. The agent must refuse and explain, not force it.
+turns:
+  - user: "Sarah Chen is returning two Navy Large hoodies from order O-1006, good condition."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM returns"
+          equals: 1
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='HOOD-NVY-L'"
+          equals: 6
+      reply_contains: ["1"]

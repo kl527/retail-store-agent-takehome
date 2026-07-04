@@ -1,0 +1,11 @@
+name: p02-ten-totes-insufficient-stock
+description: Known prompt 2 — only 4 totes on hand; the sale must be refused, not partially recorded.
+turns:
+  - user: "Ring up ten Canvas Totes for a walk-in."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM orders"
+          equals: 15
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 4
+      reply_contains: ["4"]

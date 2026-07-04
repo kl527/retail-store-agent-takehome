@@ -1,0 +1,10 @@
+name: p03-ambiguous-hoodie-asks
+description: Known prompt 3 — "hoodie in medium" matches Gray-M and Navy-M; the agent must ask, not guess.
+turns:
+  - user: "Ring up a hoodie in medium for Sarah Chen."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM orders"
+          equals: 15
+      reply_contains: ["?", "gray", "navy"]
+      tool_not_called: ["ring_up_sale"]

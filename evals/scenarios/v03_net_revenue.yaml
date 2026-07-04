@@ -1,0 +1,7 @@
+name: v03-net-revenue-paraphrase
+description: Asking after refunds must produce net revenue (1732.20), not gross (1786.20).
+turns:
+  - user: "How much money did we actually keep from May sales, after refunds?"
+    expect:
+      reply_contains: ["1732.20"]
+      tool_called: ["revenue_report"]

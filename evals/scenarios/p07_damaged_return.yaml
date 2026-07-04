@@ -1,0 +1,13 @@
+name: p07-damaged-tote-return
+description: Known prompt 7 — damaged return refunds the paid 16.20 but does not restock.
+turns:
+  - user: "Return the Canvas Tote from order O-1006 — it came back damaged."
+    expect:
+      sql:
+        - query: "SELECT refund_amount FROM returns WHERE return_id='R-2002'"
+          equals: 16.2
+        - query: "SELECT condition FROM returns WHERE return_id='R-2002'"
+          equals: damaged
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 4
+      reply_contains: ["16.20"]

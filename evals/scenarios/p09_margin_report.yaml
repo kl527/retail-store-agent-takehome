@@ -1,0 +1,7 @@
+name: p09-top-products-by-margin
+description: Known prompt 9 — May margins; Classic Tee leads at 420.00 (hoodie 282.00 after the restocked return).
+turns:
+  - user: "What were my top five products by profit margin last month?"
+    expect:
+      reply_contains: ["Classic Tee", "420", "282"]
+      tool_called: ["top_products_by_margin"]

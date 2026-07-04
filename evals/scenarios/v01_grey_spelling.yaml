@@ -1,0 +1,13 @@
+name: v01-grey-spelling-unambiguous
+description: A grey medium hoodie is fully specified (grey maps to Gray) — the agent should sell without asking.
+turns:
+  - user: "Sell one grey medium hoodie to a walk-in today, cash."
+    expect:
+      sql:
+        - query: "SELECT sku FROM order_lines WHERE order_id='O-1016'"
+          equals: HOOD-GRY-M
+        - query: "SELECT customer_id FROM orders WHERE order_id='O-1016'"
+          equals: null
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='HOOD-GRY-M'"
+          equals: 8
+      reply_contains: ["60.00"]

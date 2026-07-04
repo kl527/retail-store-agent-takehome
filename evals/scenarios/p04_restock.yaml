@@ -1,0 +1,15 @@
+name: p04-restock-below-reorder
+description: Known prompt 4 — only the tote qualifies; Pioneer is cheaper but too slow, so Northwind wins.
+turns:
+  - user: "Reorder anything that's below its reorder point, from the best supplier. Date it today."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM purchase_orders"
+          equals: 1
+        - query: "SELECT supplier_id FROM purchase_orders WHERE po_id='PO-3001'"
+          equals: SUP-NW
+        - query: "SELECT created_date FROM purchase_orders WHERE po_id='PO-3001'"
+          equals: 2026-06-19
+        - query: "SELECT qty_ordered FROM purchase_order_lines WHERE po_id='PO-3001' AND sku='TOTE'"
+          equals: 50
+      reply_contains: ["PO-3001", "Northwind", "50"]

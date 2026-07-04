@@ -1,0 +1,13 @@
+name: p08-promo-then-discounted-sale
+description: Known prompt 8 — create the hoodie promo, sell inside the window, price must be 48.00.
+turns:
+  - user: "Put all hoodies on 20% off from 2026-06-20 to 2026-06-22, then ring up one Gray Medium hoodie dated 2026-06-21 and tell me the price."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM promotions WHERE scope_ref='P-HOOD' AND value=20 AND start_date='2026-06-20' AND end_date='2026-06-22'"
+          equals: 1
+        - query: "SELECT unit_price FROM order_lines WHERE sku='HOOD-GRY-M' AND order_id='O-1016'"
+          equals: 48.0
+        - query: "SELECT order_date FROM orders WHERE order_id='O-1016'"
+          equals: 2026-06-21
+      reply_contains: ["48.00"]

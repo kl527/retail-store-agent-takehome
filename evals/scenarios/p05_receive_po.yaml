@@ -1,0 +1,17 @@
+name: p05-receive-partial-po
+description: >
+  Known prompt 5 — no PO exists in the seed, so the agent must create the PO the
+  user describes (50 totes from Northwind) and then receive the 40 that arrived.
+turns:
+  - user: "A purchase order for 50 Canvas Totes from Northwind is open and 40 arrived — receive them, dated today."
+    expect:
+      sql:
+        - query: "SELECT qty_ordered FROM purchase_order_lines WHERE sku='TOTE'"
+          equals: 50
+        - query: "SELECT qty_received FROM purchase_order_lines WHERE sku='TOTE'"
+          equals: 40
+        - query: "SELECT status FROM purchase_orders LIMIT 1"
+          equals: open
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 44
+      reply_contains: ["40"]

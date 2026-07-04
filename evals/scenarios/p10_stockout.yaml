@@ -1,0 +1,7 @@
+name: p10-stockout-report
+description: Known prompt 10 — only the Canvas Tote is about to stock out (below reorder point, 12 days cover).
+turns:
+  - user: "What's about to stock out?"
+    expect:
+      reply_contains: ["tote"]
+      tool_called: ["stockout_report"]

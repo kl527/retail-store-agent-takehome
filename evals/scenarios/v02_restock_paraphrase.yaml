@@ -1,0 +1,11 @@
+name: v02-restock-paraphrase
+description: Same intent as prompt 4 in different words.
+turns:
+  - user: "Anything running low that we should reorder? Go ahead and place the orders with whoever's best."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM purchase_orders WHERE supplier_id='SUP-NW'"
+          equals: 1
+        - query: "SELECT qty_ordered FROM purchase_order_lines WHERE sku='TOTE'"
+          equals: 50
+      reply_contains: ["Northwind"]

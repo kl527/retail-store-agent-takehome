@@ -1,0 +1,21 @@
+name: m01-sale-then-refund-that
+description: Session memory — "now refund that" must resolve to the order just created.
+turns:
+  - user: "Ring up one Ceramic Mug for Marcus Reed, paid by card, dated today."
+    expect:
+      sql:
+        - query: "SELECT customer_id FROM orders WHERE order_id='O-1016'"
+          equals: C-002
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='MUG'"
+          equals: 29
+      reply_contains: ["O-1016"]
+  - user: "Now refund that — he brought it back in good condition."
+    expect:
+      sql:
+        - query: "SELECT order_id FROM returns WHERE return_id='R-2002'"
+          equals: O-1016
+        - query: "SELECT refund_amount FROM returns WHERE return_id='R-2002'"
+          equals: 12.0
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='MUG'"
+          equals: 30
+      reply_contains: ["12.00"]

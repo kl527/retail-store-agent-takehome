@@ -1,0 +1,17 @@
+name: m02-ambiguity-then-resolve
+description: The clarifying answer must carry context — "the navy one" completes the earlier request.
+turns:
+  - user: "Ring up a hoodie in medium for Sarah Chen, card, dated today."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM orders"
+          equals: 15
+      reply_contains: ["?"]
+  - user: "The navy one."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM orders WHERE order_id='O-1016' AND customer_id='C-001'"
+          equals: 1
+        - query: "SELECT sku FROM order_lines WHERE order_id='O-1016'"
+          equals: HOOD-NVY-M
+      reply_contains: ["O-1016"]

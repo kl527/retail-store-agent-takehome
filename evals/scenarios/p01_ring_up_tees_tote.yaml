@@ -1,0 +1,15 @@
+name: p01-ring-up-tees-and-tote
+description: Known prompt 1 — basic walk-in sale, cash, today.
+turns:
+  - user: "Ring up two Classic Tees, Blue Medium, and one Canvas Tote for a walk-in paying cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM orders WHERE order_id='O-1016' AND order_date='2026-06-19' AND customer_id IS NULL AND payment_method='cash'"
+          equals: 1
+        - query: "SELECT quantity FROM order_lines WHERE order_id='O-1016' AND sku='TEE-BLU-M'"
+          equals: 2
+        - query: "SELECT quantity FROM order_lines WHERE order_id='O-1016' AND sku='TOTE'"
+          equals: 1
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 3
+      reply_contains: ["O-1016", "68.00"]

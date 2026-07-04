@@ -1,0 +1,13 @@
+name: p06-good-hoodie-return
+description: Known prompt 6 — refund the paid price (54.00 after the 10% order discount), restock the unit.
+turns:
+  - user: "Sarah Chen is returning one Navy Large hoodie from order O-1006. It's in good condition."
+    expect:
+      sql:
+        - query: "SELECT refund_amount FROM returns WHERE return_id='R-2002'"
+          equals: 54.0
+        - query: "SELECT condition FROM returns WHERE return_id='R-2002'"
+          equals: good
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='HOOD-NVY-L'"
+          equals: 7
+      reply_contains: ["54.00"]

@@ -1,0 +1,11 @@
+name: v05-simple-sock-sale
+description: Non-variant product, plural phrasing, quantity three.
+turns:
+  - user: "Sell three pairs of wool socks to a walk-in today, cash."
+    expect:
+      sql:
+        - query: "SELECT quantity FROM order_lines WHERE order_id='O-1016' AND sku='SOCK'"
+          equals: 3
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='SOCK'"
+          equals: 37
+      reply_contains: ["27.00"]
