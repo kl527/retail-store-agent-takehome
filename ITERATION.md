@@ -333,3 +333,82 @@ ceilings), and whether the flakiness pattern (agent asks for confirmation
 on an already-fully-specified request) clusters around any particular
 phrasing — if so, that's a tool-description fix, not something to keep
 shrugging off as "just variance."
+
+---
+
+## Iteration 4 — 2026-07-03
+
+Explicitly scoped small again (2 live evals, not a wide sweep). This batch
+stayed at the `dispatch()`/domain boundary rather than the tool schemas —
+the question was "what happens when the model's arguments don't match
+what the JSON schema asked for," which a schema alone can't guarantee.
+
+### Found before writing a single eval
+
+1. **`dispatch()` only ever caught `DomainError` and `TypeError` — anything
+   else crashed straight through.** Confirmed directly:
+   `tools.dispatch(conn, "ring_up_sale", {"items": [{"sku": "TOTE",
+   "quantity": "two"}], ...})` raised an uncaught `ValueError` all the way
+   out of `dispatch()`. `create_promotion` with a non-numeric
+   `percent_off` raised `decimal.InvalidOperation` the same way. Checked
+   the blast radius: `cli.py`'s REPL loop only catches `LLMError` around
+   `agent.run_turn(...)` — either of these would have crashed the entire
+   interactive session, not just failed one turn gracefully like every
+   other bad-input path already does.
+2. **Every `int(quantity)` conversion silently truncates a fractional
+   value instead of rejecting it.** `int(1.5) == 1`, no error — confirmed
+   `ring_up_sale(..., quantity=1.5)` recorded an order for 1 unit with no
+   complaint. Found at 4 call sites: `sales.ring_up_sale` (items),
+   `returns.process_return`, `purchasing.create_purchase_order` (items),
+   `purchasing.receive_purchase_order` (receipts, in both its validate and
+   apply loops). Same severity class as iteration 2's findings — a silent
+   wrong number, not a crash — since a real user asking for something
+   nonsensical (half a hoodie) would have it silently and incorrectly
+   rounded down instead of refused.
+
+### Fixes made
+
+- `tools.py::dispatch` now also catches `(ValueError, KeyError,
+  decimal.InvalidOperation)` alongside the existing `TypeError`, rolling
+  back and returning the same `{"error": ...}` shape as a `DomainError` —
+  consistent with the module's own stated contract ("Domain errors come
+  back as `{"error": ...}` so the model can explain the problem instead of
+  crashing"), just widened to cover malformed arguments a JSON schema
+  didn't stop.
+- New `domain/quantities.py::whole_quantity(value, field)` — coerces via
+  `float()` first, then checks the value equals its own truncation before
+  accepting it as an int; rejects otherwise. Wired into all 4 call sites
+  above (replacing the bare `int(...)` at each).
+- 2 new unit test files (`test_tools.py::test_dispatch_survives_malformed_numeric_arguments`,
+  `tests/test_quantities.py` — 5 tests) plus assertions in each affected
+  domain module. 58 unit tests passing total (up from 52).
+
+### New eval scenarios (`h11`–`h12`)
+
+Only the fractional-quantity fix got live-agent scenarios — the
+`dispatch()` crash fix doesn't have a natural-language trigger (it needs
+the *model itself* to emit a schema-violating argument type, which isn't
+something a prompt can reliably induce), so it's unit-tested only. That's
+a deliberate scoping choice, not a gap: **not every domain-layer fix needs
+a live eval** — some are exactly the kind of code-level defense that unit
+tests are the right (and only reliable) tool for, and this is one to keep
+in mind for future iterations rather than forcing a contrived prompt.
+
+| Scenario | What it checks |
+|---|---|
+| `h11-fractional-quantity-sale-rejected` | "One and a half Gray Medium hoodies" — must not silently record an order for 1 |
+| `h12-fractional-quantity-return-rejected` | Same, mirrored on the returns path against the seed's O-1006 |
+
+Both passed on the first live run. Full suite (82 scenarios): **82/82.**
+
+### Note for the next iteration
+
+This was the last iteration requested for this session. If resumed later:
+the same "call `domain.*` directly and look for an unvalidated assumption
+before writing a prompt" method has now found 4 real gaps across 3
+iterations (negative price, misleading zero, invalid dates, silent
+truncation) — cheaper and more reliable than guessing at agent phrasing
+that might expose a bug. Natural next candidates in that vein: whether
+`limit` on `top_products_by_margin` accepts a negative or zero value
+sensibly, and whether `receive_purchase_order`'s `receipts` can name a SKU
+twice in one call (summed silently, double-counted, or rejected?).

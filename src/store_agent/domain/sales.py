@@ -10,6 +10,7 @@ from ..money import D, discounted_unit_price, money_str
 from . import catalog
 from .dates import validate_date
 from .pricing import effective_unit_price
+from .quantities import whole_quantity
 
 
 def ring_up_sale(
@@ -44,7 +45,7 @@ def ring_up_sale(
     # returns logic relies on this invariant (seed data satisfies it too).
     merged: OrderedDict[str, int] = OrderedDict()
     for item in items:
-        sku, qty = catalog.resolve_sku(conn, item["sku"]), int(item["quantity"])
+        sku, qty = catalog.resolve_sku(conn, item["sku"]), whole_quantity(item["quantity"])
         if qty <= 0:
             raise DomainError("quantity must be positive", sku=sku, quantity=qty)
         merged[sku] = merged.get(sku, 0) + qty

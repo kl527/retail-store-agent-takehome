@@ -32,6 +32,32 @@ def test_dispatch_rejects_unknown_tool_and_bad_args(conn):
     assert "error" in tools.dispatch(conn, "search_products", {"nope": 1})
 
 
+def test_dispatch_survives_malformed_numeric_arguments(conn):
+    # A model can emit a JSON schema-violating argument despite the schema
+    # saying integer/number — these must come back as a structured error,
+    # never crash straight through dispatch() and take down the session.
+    result = tools.dispatch(
+        conn, "ring_up_sale", {"items": [{"sku": "TOTE", "quantity": "two"}], "date": "2026-06-19"}
+    )
+    assert "error" in result
+    result = tools.dispatch(
+        conn,
+        "create_promotion",
+        {
+            "description": "x",
+            "percent_off": "a lot",
+            "scope_type": "product",
+            "scope_ref": "P-HOOD",
+            "start_date": "2026-06-20",
+            "end_date": "2026-06-22",
+        },
+    )
+    assert "error" in result
+    # Nothing was recorded either time, and the connection is still usable.
+    assert conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0] == 15
+    assert conn.execute("SELECT COUNT(*) FROM promotions").fetchone()[0] == 1
+
+
 def test_run_sql_is_read_only(conn):
     ok = tools.dispatch(conn, "run_sql", {"query": "SELECT COUNT(*) AS n FROM products"})
     assert ok["rows"] == [[13]]

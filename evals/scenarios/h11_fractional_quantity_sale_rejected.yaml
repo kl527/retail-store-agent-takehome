@@ -1,0 +1,16 @@
+name: h11-fractional-quantity-sale-rejected
+description: >
+  Hoodies are indivisible units — "one and a half" is not a valid quantity.
+  Before iteration 4's fix, a model that literally passed quantity=1.5 to
+  ring_up_sale would have silently under-recorded it as 1 (int(1.5) == 1,
+  no error). Now whole_quantity rejects it outright. Either the agent
+  refuses/asks on its own, or the tool does — either way, no sale may be
+  silently recorded under a truncated quantity.
+turns:
+  - user: "Ring up one and a half Gray Medium hoodies for a walk-in, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM orders"
+          equals: 15
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='HOOD-GRY-M'"
+          equals: 9

@@ -8,6 +8,7 @@ from ..errors import DomainError
 from ..money import money_str
 from . import catalog
 from .dates import validate_date
+from .quantities import whole_quantity
 
 MAX_LEAD_DAYS = 10
 
@@ -71,7 +72,7 @@ def create_purchase_order(
     # a half-created PO behind.
     resolved = []
     for item in items:
-        sku, qty = catalog.resolve_sku(conn, item["sku"]), int(item["quantity"])
+        sku, qty = catalog.resolve_sku(conn, item["sku"]), whole_quantity(item["quantity"])
         if qty <= 0:
             raise DomainError("quantity must be positive", sku=sku, quantity=qty)
         product = conn.execute("SELECT * FROM products WHERE sku = ?", (sku,)).fetchone()
@@ -238,7 +239,7 @@ def receive_purchase_order(
 
     # Validate the whole delivery before applying any of it.
     for receipt in receipts:
-        sku, qty = receipt["sku"], int(receipt["quantity"])
+        sku, qty = receipt["sku"], whole_quantity(receipt["quantity"])
         if sku not in outstanding:
             raise DomainError(f"{po_id} has no line for SKU {sku}", po_id=po_id, sku=sku)
         if qty <= 0:
@@ -253,7 +254,7 @@ def receive_purchase_order(
 
     received = []
     for receipt in receipts:
-        sku, qty = receipt["sku"], int(receipt["quantity"])
+        sku, qty = receipt["sku"], whole_quantity(receipt["quantity"])
         conn.execute(
             "UPDATE purchase_order_lines SET qty_received = qty_received + ? WHERE po_id = ? AND sku = ?",
             (qty, po_id, sku),

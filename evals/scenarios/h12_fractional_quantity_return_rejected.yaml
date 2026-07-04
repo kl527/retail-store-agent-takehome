@@ -1,0 +1,14 @@
+name: h12-fractional-quantity-return-rejected
+description: >
+  Same fractional-quantity gap, mirrored on the returns path: process_return
+  had the identical silent-truncation bug (int(1.5) == 1) before iteration
+  4's fix. "One and a half" hoodies back is nonsensical — must not silently
+  process a return of 1.
+turns:
+  - user: "Sarah Chen is returning one and a half Navy Large hoodies from order O-1006, good condition."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM returns"
+          equals: 1
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='HOOD-NVY-L'"
+          equals: 6

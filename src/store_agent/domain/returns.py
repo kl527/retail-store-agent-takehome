@@ -7,6 +7,7 @@ from ..errors import DomainError
 from ..money import discounted_unit_price, money_str
 from . import catalog
 from .dates import validate_date
+from .quantities import whole_quantity
 
 
 def process_return(
@@ -24,7 +25,7 @@ def process_return(
     validate_date(return_date, "date")
     if condition not in ("good", "damaged"):
         raise DomainError("condition must be 'good' or 'damaged'", condition=condition)
-    quantity = int(quantity)
+    quantity = whole_quantity(quantity)
     if quantity <= 0:
         raise DomainError("quantity must be positive", quantity=quantity)
     sku = catalog.resolve_sku(conn, sku)

@@ -8,6 +8,7 @@ explain the problem instead of crashing or guessing.
 `python -m store_agent.tools` prints the reference table used in the docs.
 """
 
+import decimal
 import json
 import sqlite3
 
@@ -467,7 +468,11 @@ def dispatch(conn: sqlite3.Connection, name: str, arguments: dict) -> dict:
     except DomainError as e:
         conn.rollback()  # never leave a failed action half-applied
         return {"error": e.message, "details": e.details}
-    except TypeError as e:
+    except (TypeError, ValueError, KeyError, decimal.InvalidOperation) as e:
+        # Malformed arguments the JSON schema didn't stop (e.g. a non-numeric
+        # quantity/percent, or a missing item field) — same contract as a
+        # DomainError: relay it, never let a bad tool call crash the session.
+        conn.rollback()
         return {"error": f"Bad arguments for {name}: {e}"}
 
 
