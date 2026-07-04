@@ -88,6 +88,21 @@ def test_validation_errors(conn):
         ring_up_sale(conn, [{"sku": "MUG", "quantity": 0}], "2026-06-19")
 
 
+def test_order_discount_pct_out_of_bounds_rejected(conn):
+    # A discount over 100% would produce a negative price — the store paying
+    # the customer to take the item. Must be refused, not silently applied.
+    with pytest.raises(DomainError):
+        ring_up_sale(conn, [{"sku": "TOTE", "quantity": 1}], "2026-06-19", order_discount_pct=150)
+    with pytest.raises(DomainError):
+        ring_up_sale(conn, [{"sku": "TOTE", "quantity": 1}], "2026-06-19", order_discount_pct=-10)
+    # Nothing was recorded either time.
+    assert conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0] == 15
+    assert conn.execute("SELECT on_hand_qty FROM inventory WHERE sku='TOTE'").fetchone()[0] == 4
+    # Exactly 100% (give it away for free) is a legitimate boundary, not an error.
+    result = ring_up_sale(conn, [{"sku": "TOTE", "quantity": 1}], "2026-06-19", order_discount_pct=100)
+    assert result["lines"][0]["paid_unit_price"] == "0.00"
+
+
 def test_get_order_includes_paid_prices_and_returns(conn):
     order = get_order(conn, "O-1006")
     by_sku = {l["sku"]: l for l in order["lines"]}

@@ -1,6 +1,9 @@
 """Rules 6 and 7: revenue, margin, velocity/stock-out — hand-verified numbers."""
 
+import pytest
+
 from store_agent.domain.reports import revenue_report, stockout_report, top_products_by_margin
+from store_agent.errors import DomainError
 
 
 def test_may_revenue(conn):
@@ -24,6 +27,15 @@ def test_prompt9_top_products_by_margin(conn):
     hood = next(p for p in report["products"] if p["product_id"] == "P-HOOD")
     assert hood["units_sold"] == 10
     assert hood["units_returned_to_stock"] == 1
+
+
+def test_reversed_date_range_rejected(conn):
+    # A swapped start/end would otherwise silently read as SQL BETWEEN's
+    # empty set — "$0.00 revenue" reading as "no May sales" instead of a typo.
+    with pytest.raises(DomainError):
+        revenue_report(conn, "2026-05-31", "2026-05-01")
+    with pytest.raises(DomainError):
+        top_products_by_margin(conn, "2026-05-31", "2026-05-01")
 
 
 def test_prompt10_stockout_flags_only_tote(conn):

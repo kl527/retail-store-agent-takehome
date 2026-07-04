@@ -1,0 +1,11 @@
+name: h07-reversed-date-range-flagged
+description: >
+  A swapped start/end date range would silently read as SQL BETWEEN's empty
+  set — "$0.00 revenue" looking like "no May sales" instead of a typo'd
+  range. revenue_report now raises on start_date > end_date (iteration-2
+  fix in domain/reports.py); the agent must relay that rather than reporting
+  a bare, misleading $0.00.
+turns:
+  - user: "What was our revenue between 2026-05-31 and 2026-05-01?"
+    expect:
+      tool_called: ["revenue_report"]

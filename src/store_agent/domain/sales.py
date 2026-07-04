@@ -2,6 +2,7 @@
 
 import sqlite3
 from collections import OrderedDict
+from decimal import Decimal
 
 from ..db import next_order_id
 from ..errors import DomainError
@@ -24,6 +25,10 @@ def ring_up_sale(
     """
     if payment_method not in ("cash", "card"):
         raise DomainError("payment_method must be 'cash' or 'card'", payment_method=payment_method)
+    if not (Decimal(0) <= D(order_discount_pct) <= Decimal(100)):
+        raise DomainError(
+            "order_discount_pct must be between 0 and 100", order_discount_pct=order_discount_pct
+        )
     if customer_id is not None:
         found = conn.execute(
             "SELECT 1 FROM customers WHERE customer_id = ?", (customer_id,)

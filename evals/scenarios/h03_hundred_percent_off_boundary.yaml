@@ -1,0 +1,19 @@
+name: h03-hundred-percent-off-boundary
+description: >
+  Exactly 100% off (give it away for free) is a legitimate boundary, unlike
+  anything over 100% — create_promotion already allows pct<=100, and a sale
+  under it must land at exactly $0.00, not error and not go negative.
+turns:
+  - user: "Put Ceramic Mugs on 100% off from 2026-06-19 to 2026-06-19."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM promotions WHERE scope_ref='P-MUG' AND value=100"
+          equals: 1
+  - user: "Ring up one Ceramic Mug for a walk-in, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT unit_price FROM order_lines WHERE order_id='O-1016' AND sku='MUG'"
+          equals: 0.0
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='MUG'"
+          equals: 29
+      reply_contains: ["0.00"]

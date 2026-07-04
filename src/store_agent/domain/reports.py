@@ -36,9 +36,20 @@ def _paid_lines(conn: sqlite3.Connection, start_date: str, end_date: str):
     ).fetchall()
 
 
+def _check_date_range(start_date: str, end_date: str) -> None:
+    """A reversed range would silently read as SQL BETWEEN's empty set (zero
+    rows, not an error) — that reads as "no revenue/sales that period" when
+    it's really a swapped-date typo, so reject it explicitly instead."""
+    if end_date < start_date:
+        raise DomainError(
+            "start_date is after end_date", start_date=start_date, end_date=end_date
+        )
+
+
 def revenue_report(conn: sqlite3.Connection, start_date: str, end_date: str) -> dict:
     """Rule 6: revenue = dollars paid on orders in the period; net subtracts
     refunds *issued* in the period."""
+    _check_date_range(start_date, end_date)
     gross = Decimal(0)
     for line in _paid_lines(conn, start_date, end_date):
         paid = discounted_unit_price(line["unit_price"], line["order_discount_pct"])
@@ -65,6 +76,7 @@ def top_products_by_margin(
     from both revenue and cost; a damaged return stays in both (the rule's
     exclusion is only for restocked units — refunds hit net revenue instead).
     """
+    _check_date_range(start_date, end_date)
     costs = _northwind_costs(conn)
     stats: dict[str, dict] = {}
     for line in _paid_lines(conn, start_date, end_date):

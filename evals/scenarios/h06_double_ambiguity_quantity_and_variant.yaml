@@ -1,0 +1,14 @@
+name: h06-double-ambiguity-quantity-and-variant
+description: >
+  "Some hoodies" is ambiguous on two independent axes at once: quantity
+  ("some" isn't a number) and variant (color/size unstated, 4 SKUs match).
+  A model must not resolve either by guessing a "reasonable" default —
+  it should ask, not silently pick e.g. 1 Gray Medium.
+turns:
+  - user: "Ring up some hoodies for Sarah Chen, card, dated today."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM orders"
+          equals: 15
+      reply_contains: ["?"]
+      tool_not_called: ["ring_up_sale"]

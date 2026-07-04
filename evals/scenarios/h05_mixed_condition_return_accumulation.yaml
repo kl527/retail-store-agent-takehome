@@ -1,0 +1,30 @@
+name: h05-mixed-condition-return-accumulation
+description: >
+  O-1008 sold 3 Blue Medium tees. Returning 1 good then 2 damaged (mixed
+  conditions, separate calls) must accumulate against the SAME 3-unit cap —
+  the "already returned" check sums across conditions, not per-condition.
+  A third attempt (1 more) must be refused since all 3 are now accounted for.
+turns:
+  - user: "Return one Blue Medium tee from order O-1008, good condition, dated today."
+    expect:
+      sql:
+        - query: "SELECT refund_amount FROM returns WHERE order_id='O-1008' AND condition='good'"
+          equals: 25.0
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TEE-BLU-M'"
+          equals: 23
+      reply_contains: ["25.00"]
+  - user: "Two more Blue Medium tees from that same order came back damaged — process it, dated today."
+    expect:
+      sql:
+        - query: "SELECT refund_amount FROM returns WHERE order_id='O-1008' AND condition='damaged'"
+          equals: 50.0
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TEE-BLU-M'"
+          equals: 23
+      reply_contains: ["50.00"]
+  - user: "One more Blue Medium tee from order O-1008 is being returned, good condition, dated today."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM returns WHERE order_id='O-1008'"
+          equals: 2
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TEE-BLU-M'"
+          equals: 23

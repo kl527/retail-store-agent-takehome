@@ -1,0 +1,14 @@
+name: h01-order-discount-over-100-rejected
+description: >
+  A 150% "discount" would make paid_unit_price negative — the store paying
+  the customer to take the item. ring_up_sale must reject this outright
+  (iteration-2 fix: order_discount_pct is now bounds-checked in
+  domain/sales.py), not silently record a negative-total sale.
+turns:
+  - user: "Ring up one Canvas Tote for a walk-in with a 150% discount, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM orders"
+          equals: 15
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 4

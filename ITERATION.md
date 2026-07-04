@@ -188,8 +188,81 @@ Full suite, `--workers 2` (to keep clear of the shared rate limit):
 
 ---
 
-## Iteration 2 — pending
+## Iteration 2 — 2026-07-03
 
-Suite is at 100%; per the plan, the next step is a harder batch of eval
-scenarios rather than declaring victory. See below for what's added and
-what it finds.
+Suite was at 100% (70/70), so per the plan this iteration adds a harder
+batch rather than declaring victory. This time the hunt looked past agent
+*behavior* and at the **domain layer itself** — are there business-rule
+inputs nothing validates? Ground truth for two hypotheses was checked by
+calling `domain.*` functions directly (no LLM involved), before touching
+any eval or the live model:
+
+### Found before writing a single eval
+
+1. **`ring_up_sale`'s `order_discount_pct` was never bounds-checked.**
+   `sales.ring_up_sale(conn, [{"sku": "TOTE", "quantity": 1}], "2026-06-19", order_discount_pct=150, ...)`
+   returned a line with `paid_unit_price: "-9.00"` — a 150% "discount"
+   silently produced a *negative* price, i.e. the store paying the
+   customer to take the item. `create_promotion` already validates its
+   own percent (`0 < pct <= 100`); the equivalent check on the order-level
+   discount path had simply been missed.
+2. **`revenue_report`/`top_products_by_margin` never validated `start_date <= end_date`.**
+   A reversed range (`revenue_report(conn, "2026-05-31", "2026-05-01")`)
+   silently returned `gross_revenue: "0.00"` — SQL `BETWEEN` on a swapped
+   range just matches nothing. That reads as "no May revenue," which is
+   indistinguishable from a genuine zero-revenue period, when it's really
+   a swapped-date typo the report should refuse to answer for.
+
+### Fixes made (domain layer, not just prompting)
+
+- `domain/sales.py`: `ring_up_sale` now raises `DomainError` unless
+  `0 <= order_discount_pct <= 100`. 100% (free) is a legitimate boundary
+  and still allowed; anything above is not. Schema in `tools.py` gained
+  `minimum`/`maximum` hints for the model.
+- `domain/reports.py`: new `_check_date_range` helper, called from both
+  `revenue_report` and `top_products_by_margin`, raises `DomainError` if
+  `end_date < start_date`.
+- Unit tests added for both (`tests/test_sales.py::test_order_discount_pct_out_of_bounds_rejected`,
+  `tests/test_reports.py::test_reversed_date_range_rejected`) — 47 unit
+  tests passing.
+
+### New eval scenarios (`h01`–`h07`)
+
+Deliberately not padded with easy cases — every one targets either the two
+fixes above or a genuinely layered scenario that hadn't been tested yet:
+
+| Scenario | What it checks |
+|---|---|
+| `h01-order-discount-over-100-rejected` | 150% discount refused, nothing recorded |
+| `h02-order-discount-negative-rejected` | -10% "discount" (a surcharge in disguise) refused |
+| `h03-hundred-percent-off-boundary` | Exactly 100% off is *allowed*, lands at $0.00 exactly (the boundary the fix must not over-reject) |
+| `h04-layered-promo-discount-damaged-return` | Item promo (50%) + order discount (20%) + damaged return, in sequence — refund must reflect both layers ($4.80), not list price or promo-only price, and must not restock |
+| `h05-mixed-condition-return-accumulation` | Good return + damaged return against the same line, in separate calls — the remaining-returnable cap must sum across *both* conditions, not track them independently; a third return attempt at the now-zero remainder must be refused |
+| `h06-double-ambiguity-quantity-and-variant` | "Some hoodies" is ambiguous on two independent axes (quantity + variant) at once — must ask, not resolve either by guessing a default |
+| `h07-reversed-date-range-flagged` | Agent must relay the new `DomainError` rather than reporting a bare, misleading $0.00 |
+
+Ground truth for `h04`/`h05` was computed the same way as iteration 1 — by
+calling `domain.sales`/`domain.returns`/`domain.pricing` directly against a
+fresh store — before writing the YAML, so a failure means a real gap.
+
+### Result
+
+All 7 new scenarios passed on the first live run (`7/7`). Full suite
+(77 scenarios: the 70 from iteration 1 + these 7): **77/77 passed.**
+
+Unlike iteration 1, nothing here required an agent-behavior fix (no tool
+description or system-prompt change) — both gaps were pure domain-layer
+validation holes, and the fix was exactly at that layer. The eval suite
+caught them anyway because the harness asserts on database state, so a
+silently-wrong number (a negative price, a misleading zero) fails the
+check even when the agent's reply "sounds" fine.
+
+### Note for the next iteration
+
+Per explicit instruction: future iterations should skip authoring
+scenarios that are easy for the model to solve — the value of this
+exercise is in finding gaps, not in growing the suite for its own sake.
+The next batch should stay small and aim only at combinations or
+domain-layer boundaries not yet covered (e.g., other unvalidated numeric
+inputs, deeper multi-turn chains, or interactions between three or more
+mechanisms at once), rather than broad coverage for its own sake.

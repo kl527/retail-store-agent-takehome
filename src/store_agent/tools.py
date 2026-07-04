@@ -142,7 +142,12 @@ TOOLS: list[dict] = [
                     "items": _ITEMS_SCHEMA,
                     "date": _DATE,
                     "customer_id": {"type": "string"},
-                    "order_discount_pct": {"type": "number", "description": "whole-order % discount, default 0"},
+                    "order_discount_pct": {
+                        "type": "number",
+                        "description": "whole-order % discount, 0-100, default 0",
+                        "minimum": 0,
+                        "maximum": 100,
+                    },
                     "payment_method": {"type": "string", "enum": ["cash", "card"]},
                 },
                 "required": ["items", "date"],

@@ -1,0 +1,12 @@
+name: h02-order-discount-negative-rejected
+description: >
+  A negative order discount is a surcharge in disguise and nonsensical for
+  this business — must be rejected the same way an over-100% discount is.
+turns:
+  - user: "Ring up one Canvas Tote for a walk-in with a -10% discount, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM orders"
+          equals: 15
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 4

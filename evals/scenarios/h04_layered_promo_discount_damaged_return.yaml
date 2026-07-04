@@ -1,0 +1,29 @@
+name: h04-layered-promo-discount-damaged-return
+description: >
+  Three pricing mechanisms stacked in sequence: an item promo (50% off),
+  an order-level discount (20%) on top of the already-discounted register
+  price, then a damaged return that must refund the price ACTUALLY PAID
+  through both layers (4.80), not the promo price (6.00) or list price
+  (12.00) — and must not restock since it's damaged.
+turns:
+  - user: "Put Ceramic Mugs on 50% off, today only."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM promotions WHERE scope_ref='P-MUG' AND value=50"
+          equals: 1
+  - user: "Ring up one Ceramic Mug for a walk-in with a 20% order discount, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT unit_price FROM order_lines WHERE order_id='O-1016' AND sku='MUG'"
+          equals: 6.0
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='MUG'"
+          equals: 29
+      reply_contains: ["4.80"]
+  - user: "That mug just came back damaged — process the return, dated today."
+    expect:
+      sql:
+        - query: "SELECT refund_amount FROM returns WHERE order_id='O-1016' AND sku='MUG'"
+          equals: 4.8
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='MUG'"
+          equals: 29
+      reply_contains: ["4.80"]
