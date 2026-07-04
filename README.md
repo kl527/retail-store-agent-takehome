@@ -6,6 +6,13 @@ store's records are in `data/`, the business rules are in
 `DATA_DICTIONARY.md`, and the original assignment brief is in
 `ASSIGNMENT.md`.
 
+## Deliverables
+
+1. **Domain model** — [`docs/domain-model.md`](docs/domain-model.md)
+2. **Tool/action layer** — [`docs/tools.md`](docs/tools.md)
+3. **Runnable agent** — `uv run acceptDaniel` (single terminal command; see "Run it" below)
+4. **Approach writeup** — [`APPROACH.md`](APPROACH.md)
+
 ## Run it
 
 You need [uv](https://docs.astral.sh/uv/) and an LLM API key.
@@ -41,7 +48,7 @@ More detail:
 ## Tests
 
 ```bash
-uv run pytest               # 45 unit tests for the business rules, no API key needed
+uv run pytest               # 58 unit tests for the business rules, no API key needed
 uv run python evals/run.py  # scripted conversations against the live model (see evals/scenarios/)
 ```
 
