@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from ..errors import DomainError
 from ..money import D, discounted_unit_price, money_str
+from .dates import validate_date
 
 # Rule 7 pins the trailing-30-day velocity window to May 2026.
 VELOCITY_START = "2026-05-01"
@@ -40,6 +41,8 @@ def _check_date_range(start_date: str, end_date: str) -> None:
     """A reversed range would silently read as SQL BETWEEN's empty set (zero
     rows, not an error) — that reads as "no revenue/sales that period" when
     it's really a swapped-date typo, so reject it explicitly instead."""
+    validate_date(start_date, "start_date")
+    validate_date(end_date, "end_date")
     if end_date < start_date:
         raise DomainError(
             "start_date is after end_date", start_date=start_date, end_date=end_date

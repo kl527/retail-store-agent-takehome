@@ -1,0 +1,18 @@
+name: h08-fractional-percent-rounding
+description: >
+  Every promo/discount percentage tested so far has been a whole number.
+  12.5% off a $25.00 tee lands exactly on a half-cent (21.875) — the first
+  case that actually exercises half-up rounding rather than landing on a
+  clean cent by construction. Must round to $21.88, not truncate to $21.87.
+turns:
+  - user: "Put Classic Tees on 12.5% off, today only."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM promotions WHERE scope_ref='P-TEE' AND value=12.5"
+          equals: 1
+  - user: "Ring up one Classic Tee, Blue Medium, for a walk-in, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT unit_price FROM order_lines WHERE order_id='O-1016' AND sku='TEE-BLU-M'"
+          equals: 21.88
+      reply_contains: ["21.88"]

@@ -1,0 +1,37 @@
+name: h10-cost-basis-fidelity-after-alt-supplier-restock
+description: >
+  Rule 1 says cost is always Northwind's per-product cost, "wherever you
+  need cost" — regardless of which supplier actually filled a given PO.
+  Here mugs get restocked from Pioneer ($4.50, the cheaper eligible
+  supplier per rule 4) rather than Northwind ($5.00). A margin report
+  covering that stock's sales must still cost it at Northwind's $5.00 —
+  an implementation that used the PO's actual unit_cost instead would
+  understate cost (and overstate margin) by $0.50/unit. This is a
+  regression guard: domain/reports.py already gets this right by always
+  joining to Northwind's catalog row, never the PO's.
+turns:
+  - user: "Sell nineteen Ceramic Mugs to a walk-in, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='MUG'"
+          equals: 11
+  - user: "Reorder anything below its reorder point, from the best supplier, dated today."
+    expect:
+      sql:
+        - query: "SELECT supplier_id FROM purchase_orders po JOIN purchase_order_lines l ON l.po_id = po.po_id WHERE l.sku = 'MUG'"
+          equals: SUP-PG
+      reply_contains: ["Pioneer"]
+  - user: "Receive that mug shipment in full, dated today."
+    expect:
+      sql:
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='MUG'"
+          equals: 51
+  - user: "Sell five more Ceramic Mugs to a walk-in, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='MUG'"
+          equals: 46
+  - user: "What's our margin on Ceramic Mugs today?"
+    expect:
+      reply_contains: ["168.00"]
+      tool_called: ["top_products_by_margin"]

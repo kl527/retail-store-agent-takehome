@@ -7,6 +7,7 @@ from ..db import next_po_id
 from ..errors import DomainError
 from ..money import money_str
 from . import catalog
+from .dates import validate_date
 
 MAX_LEAD_DAYS = 10
 
@@ -60,6 +61,7 @@ def create_purchase_order(
     items: list[dict],
     created_date: str,
 ) -> dict:
+    validate_date(created_date, "date")
     supplier = resolve_supplier(conn, supplier_id)
     supplier_id = supplier["supplier_id"]
     if not items:
@@ -120,6 +122,7 @@ def create_purchase_order(
 def restock_below_reorder(conn: sqlite3.Connection, created_date: str) -> dict:
     """Scan inventory, order reorder_qty of every SKU at/below its reorder
     point from the best eligible supplier; one PO per supplier."""
+    validate_date(created_date, "date")
     low = conn.execute(
         """SELECT i.*, p.product_id, p.product_name FROM inventory i
            JOIN products p ON p.sku = i.sku
@@ -211,6 +214,7 @@ def receive_purchase_order(
     receipts=[{sku, quantity}, ...] for a partial delivery; omit to receive
     everything still outstanding. The PO closes when all lines are complete.
     """
+    validate_date(received_date, "date")
     po = conn.execute("SELECT * FROM purchase_orders WHERE po_id = ?", (po_id,)).fetchone()
     if po is None:
         raise DomainError(f"Unknown purchase order: {po_id}", po_id=po_id)

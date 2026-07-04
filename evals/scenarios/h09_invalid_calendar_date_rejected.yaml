@@ -1,0 +1,15 @@
+name: h09-invalid-calendar-date-rejected
+description: >
+  February 2026 has 28 days — "2026-02-30" is syntactically well-formed but
+  does not exist. Nothing in SQLite catches this (dates are opaque TEXT), so
+  the domain layer now validates real calendar dates itself (iteration-3
+  fix, domain/dates.py). The agent must relay the rejection, not record a
+  sale under a date that never happened.
+turns:
+  - user: "Ring up one Canvas Tote for a walk-in, cash, dated 2026-02-30."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM orders"
+          equals: 15
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 4

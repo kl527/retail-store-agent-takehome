@@ -6,6 +6,7 @@ from ..db import next_return_id
 from ..errors import DomainError
 from ..money import discounted_unit_price, money_str
 from . import catalog
+from .dates import validate_date
 
 
 def process_return(
@@ -20,6 +21,7 @@ def process_return(
 
     'good' units go back to on-hand stock; 'damaged' units do not.
     """
+    validate_date(return_date, "date")
     if condition not in ("good", "damaged"):
         raise DomainError("condition must be 'good' or 'damaged'", condition=condition)
     quantity = int(quantity)

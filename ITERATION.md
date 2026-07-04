@@ -266,3 +266,70 @@ The next batch should stay small and aim only at combinations or
 domain-layer boundaries not yet covered (e.g., other unvalidated numeric
 inputs, deeper multi-turn chains, or interactions between three or more
 mechanisms at once), rather than broad coverage for its own sake.
+
+---
+
+## Iteration 3 — 2026-07-03
+
+Per the note above, this batch is deliberately small (3 scenarios, not
+another wide sweep) and continues iteration 2's approach: hunt for
+unvalidated domain-layer inputs by calling `domain.*` functions directly,
+*then* write the eval, rather than starting from prompt ideas.
+
+### Found before writing a single eval
+
+**No date parameter anywhere validates that it's a real calendar date.**
+Dates are opaque `TEXT` to SQLite — nothing parses them. Confirmed:
+`sales.ring_up_sale(conn, [...], "2026-02-30", ...)` (February only has 28
+days in 2026) recorded the sale under `order_date = "2026-02-30"` without
+complaint. Lower severity than iteration 2's two findings (lexicographic
+string comparison still keeps a bogus date roughly "in order" relative to
+real ones, so it doesn't corrupt reports the way a reversed range did),
+but it's the same category of gap: a business-rule assumption ("dates are
+real calendar dates") that nothing enforced.
+
+Also explicitly checked, and confirmed *already correct* (a regression
+guard, not a bug): rule 1's "cost is always Northwind's per-product cost,
+wherever you need cost" — even for units actually restocked through
+Pioneer Goods (the cheaper, rule-4-eligible supplier for mugs).
+`top_products_by_margin` costs strictly via a join to Northwind's
+`supplier_catalog` row, never the PO's own `unit_cost`, so margin doesn't
+silently drift if a naive future change tried to use "whatever we actually
+paid" instead.
+
+### Fix made
+
+New `domain/dates.py::validate_date(value, field)` — parses with
+`datetime.date.fromisoformat`, raises `DomainError` on anything that isn't
+a real calendar date. Wired into every date-accepting entry point:
+`ring_up_sale`, `process_return`, `create_purchase_order`,
+`receive_purchase_order`, `restock_below_reorder`, `create_promotion`
+(both `start_date` and `end_date`), `applicable_promotions` (covers
+`effective_unit_price` and therefore `get_price_quote` too), and
+`revenue_report`/`top_products_by_margin` (via the existing
+`_check_date_range` helper from iteration 2). 5 new unit tests in
+`tests/test_dates.py`; 52 unit tests passing total.
+
+### New eval scenarios (`h08`–`h10`)
+
+| Scenario | What it checks |
+|---|---|
+| `h08-fractional-percent-rounding` | First non-whole-number percentage tested (12.5% off $25.00 lands exactly on a half-cent, $21.875) — must round half-up to $21.88, not truncate to $21.87 |
+| `h09-invalid-calendar-date-rejected` | "2026-02-30" refused outright (the new fix), order count and inventory unchanged |
+| `h10-cost-basis-fidelity-after-alt-supplier-restock` | 5-turn chain: deplete mugs → restock (Pioneer wins the tie-break, $4.50) → receive → sell more → margin report must still cost at Northwind's $5.00, confirming the already-correct behavior described above stays correct |
+
+All 3 passed on the first live run. Full suite (80 scenarios): **79/80**
+on the full concurrent run — the one failure (`rt03-exact-remaining-qty-boundary`,
+unrelated to anything changed this iteration) reproduced as **3/3 pass**
+on standalone reruns, consistent with the hosted-API decoding variance
+already documented in iteration 1's open items, not a new regression.
+Effectively **80/80**.
+
+### Note for the next iteration
+
+Same guidance as above still applies. Worth checking next: other
+unvalidated numeric business rules (percent fields elsewhere, quantity
+ceilings), and whether the flakiness pattern (agent asks for confirmation
+on an already-fully-specified request) clusters around any particular
+phrasing — if so, that's a tool-description fix, not something to keep
+shrugging off as "just variance."

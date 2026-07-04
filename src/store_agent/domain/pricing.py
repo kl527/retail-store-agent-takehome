@@ -5,10 +5,12 @@ from decimal import Decimal
 
 from ..errors import DomainError
 from ..money import D, percent_off
+from .dates import validate_date
 
 
 def applicable_promotions(conn: sqlite3.Connection, sku: str, on_date: str) -> list[sqlite3.Row]:
     """Promotions whose scope covers this SKU and whose window contains the date."""
+    validate_date(on_date, "date")
     return conn.execute(
         """SELECT pr.* FROM promotions pr
            JOIN products p ON p.sku = ?
@@ -63,6 +65,8 @@ def create_promotion(
 ) -> dict:
     from ..db import next_promo_id
 
+    validate_date(start_date, "start_date")
+    validate_date(end_date, "end_date")
     if scope_type not in ("product", "category"):
         raise DomainError("scope_type must be 'product' or 'category'", scope_type=scope_type)
     if scope_type == "product":

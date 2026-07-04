@@ -8,6 +8,7 @@ from ..db import next_order_id
 from ..errors import DomainError
 from ..money import D, discounted_unit_price, money_str
 from . import catalog
+from .dates import validate_date
 from .pricing import effective_unit_price
 
 
@@ -23,6 +24,7 @@ def ring_up_sale(
 
     Refuses the whole sale if any line lacks stock — no partial sales.
     """
+    validate_date(sale_date, "date")
     if payment_method not in ("cash", "card"):
         raise DomainError("payment_method must be 'cash' or 'card'", payment_method=payment_method)
     if not (Decimal(0) <= D(order_discount_pct) <= Decimal(100)):
