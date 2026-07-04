@@ -44,9 +44,9 @@ The numbers you see come out of tested code, not out of the model.
 
 More detail:
 
+- `APPROACH.md` explains the approach and how it was tested
 - `docs/domain-model.md` covers the schema and the reasoning behind it
 - `docs/tools.md` lists every tool the agent can call
-- `docs/writeup.md` explains the approach and how it was tested
 
 ## Tests
 
