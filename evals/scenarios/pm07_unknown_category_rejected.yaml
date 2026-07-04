@@ -1,0 +1,11 @@
+name: pm07-unknown-category-rejected
+description: >
+  Only 'apparel' and 'goods' are valid categories. "Kitchenware" isn't one of
+  them (even though mugs might sound kitchen-adjacent) and must be rejected
+  rather than silently mapped onto 'goods'.
+turns:
+  - user: "Put everything in the kitchenware category on 20% off from 2026-06-20 to 2026-06-25."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM promotions"
+          equals: 1

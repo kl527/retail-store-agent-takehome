@@ -1,0 +1,11 @@
+name: e12-quantity-word-dozen
+description: "'A dozen' must resolve to quantity 12."
+turns:
+  - user: "Ring up a dozen wool socks for a walk-in, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT quantity FROM order_lines WHERE order_id='O-1016' AND sku='SOCK'"
+          equals: 12
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='SOCK'"
+          equals: 28
+      reply_contains: ["108.00"]

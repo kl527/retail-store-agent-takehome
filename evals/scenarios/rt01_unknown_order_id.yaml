@@ -1,0 +1,8 @@
+name: rt01-unknown-order-id
+description: Returning against an order id that doesn't exist must be refused cleanly.
+turns:
+  - user: "Process a return for one Canvas Tote from order O-9999, good condition."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM returns"
+          equals: 1

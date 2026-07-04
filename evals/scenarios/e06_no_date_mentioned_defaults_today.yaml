@@ -1,0 +1,12 @@
+name: e06-no-date-mentioned-defaults-today
+description: >
+  User never states a date at all. The ring_up_sale tool requires a date
+  parameter, so the agent itself must supply today's date (2026-06-19)
+  rather than asking or guessing something else.
+turns:
+  - user: "Ring up one Ceramic Mug for a walk-in, cash."
+    expect:
+      sql:
+        - query: "SELECT order_date FROM orders WHERE order_id='O-1016'"
+          equals: 2026-06-19
+      reply_contains: ["12.00"]

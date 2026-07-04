@@ -1,0 +1,35 @@
+name: pm03-boundary-dates-inclusive-both-ends
+description: >
+  Promo window 2026-06-20..2026-06-22 is inclusive on both ends. Sales dated
+  the day before and the day after must be full price; sales dated exactly
+  on the start and end days must get the discount.
+turns:
+  - user: "Put Canvas Totes on 10% off from 2026-06-20 to 2026-06-22."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM promotions WHERE scope_ref='P-TOTE'"
+          equals: 1
+  - user: "Ring up one Canvas Tote for a walk-in, cash, dated 2026-06-19."
+    expect:
+      sql:
+        - query: "SELECT unit_price FROM order_lines WHERE order_id='O-1016' AND sku='TOTE'"
+          equals: 18.0
+      reply_contains: ["18.00"]
+  - user: "Ring up one Canvas Tote for a walk-in, cash, dated 2026-06-20."
+    expect:
+      sql:
+        - query: "SELECT unit_price FROM order_lines WHERE order_id='O-1017' AND sku='TOTE'"
+          equals: 16.2
+      reply_contains: ["16.20"]
+  - user: "Ring up one Canvas Tote for a walk-in, cash, dated 2026-06-22."
+    expect:
+      sql:
+        - query: "SELECT unit_price FROM order_lines WHERE order_id='O-1018' AND sku='TOTE'"
+          equals: 16.2
+      reply_contains: ["16.20"]
+  - user: "Ring up one Canvas Tote for a walk-in, cash, dated 2026-06-23."
+    expect:
+      sql:
+        - query: "SELECT unit_price FROM order_lines WHERE order_id='O-1019' AND sku='TOTE'"
+          equals: 18.0
+      reply_contains: ["18.00"]

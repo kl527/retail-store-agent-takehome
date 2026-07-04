@@ -1,0 +1,16 @@
+name: e01-exact-depletion-sale
+description: >
+  Selling exactly the on-hand quantity (4 totes) is not a shortage — boundary
+  is "<", not "<=". Must succeed and leave stock at exactly 0.
+turns:
+  - user: "Ring up four Canvas Totes for a walk-in, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM orders WHERE order_id='O-1016'"
+          equals: 1
+        - query: "SELECT quantity FROM order_lines WHERE order_id='O-1016' AND sku='TOTE'"
+          equals: 4
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 0
+      reply_contains: ["72.00"]
+      tool_called: ["ring_up_sale"]

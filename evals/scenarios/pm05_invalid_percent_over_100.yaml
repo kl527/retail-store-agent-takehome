@@ -1,0 +1,8 @@
+name: pm05-invalid-percent-over-100-rejected
+description: A 150% "discount" is nonsensical and must not be created.
+turns:
+  - user: "Put all hoodies on 150% off from 2026-06-20 to 2026-06-22."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM promotions"
+          equals: 1

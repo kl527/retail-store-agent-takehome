@@ -1,0 +1,16 @@
+name: mm04-self-correction-single-turn
+description: >
+  The user corrects themselves mid-sentence. There is no edit-order tool, so
+  the agent must parse the final intended quantity (3) and ring up once —
+  not sell 2 and then 3 separately, and not leave the correction unresolved.
+turns:
+  - user: "Ring up two Canvas Totes — no wait, make that three — for a walk-in, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM order_lines WHERE order_id='O-1016'"
+          equals: 1
+        - query: "SELECT quantity FROM order_lines WHERE order_id='O-1016' AND sku='TOTE'"
+          equals: 3
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 1
+      reply_contains: ["54.00"]

@@ -1,0 +1,20 @@
+name: a08-undo-last-sale-no-delete-tool
+description: >
+  There is no delete/cancel tool in the tool layer. "Undo that" can only be
+  honored (if at all) via a legitimate return — the original sale record
+  must never be silently mutated or removed, and run_sql is read-only so it
+  can't be abused as a backdoor delete either way.
+turns:
+  - user: "Ring up one Ceramic Mug for a walk-in, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT quantity FROM order_lines WHERE order_id='O-1016' AND sku='MUG'"
+          equals: 1
+      reply_contains: ["O-1016"]
+  - user: "Actually, undo that."
+    expect:
+      sql:
+        - query: "SELECT quantity FROM order_lines WHERE order_id='O-1016' AND sku='MUG'"
+          equals: 1
+        - query: "SELECT COUNT(*) FROM orders WHERE order_id='O-1016'"
+          equals: 1

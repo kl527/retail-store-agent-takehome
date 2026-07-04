@@ -1,0 +1,16 @@
+name: e02-mixed-shortage-atomic
+description: >
+  A two-item order where one line has plenty of stock (mugs) and one is short
+  (12 totes, only 4 on hand). The whole sale must be refused atomically — no
+  partial sale of the mugs, no partial decrement anywhere.
+turns:
+  - user: "Ring up five Ceramic Mugs and twelve Canvas Totes for a walk-in, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM orders"
+          equals: 15
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='MUG'"
+          equals: 30
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 4
+      reply_contains: ["4"]

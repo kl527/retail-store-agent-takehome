@@ -1,0 +1,19 @@
+name: rp01-margin-unaffected-by-damaged-return
+description: >
+  Rule 6: only a GOOD (restocked) return removes units from revenue and
+  cost. A damaged return still counts in both. Processing a damaged tote
+  return before asking for margins must not change P-TOTE's May numbers —
+  a naive implementation that reduces cost whenever a return exists (rather
+  than only for restocked units) would understate it.
+turns:
+  - user: "Return the Canvas Tote from order O-1006 — it came back damaged, dated today."
+    expect:
+      sql:
+        - query: "SELECT condition FROM returns WHERE order_id='O-1006' AND sku='TOTE'"
+          equals: damaged
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 4
+  - user: "What were the top products by margin last month?"
+    expect:
+      reply_contains: ["108.20"]
+      tool_called: ["top_products_by_margin"]

@@ -1,0 +1,18 @@
+name: e03-duplicate-sku-merge
+description: >
+  User names the same variant twice in one sentence — the domain layer merges
+  duplicate SKUs into a single order line, so this must land as one line with
+  quantity 3, not two lines or two orders.
+turns:
+  - user: "Ring up two Classic Tees, Blue Medium, and one more Blue Medium tee for a walk-in, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM orders WHERE order_id='O-1016'"
+          equals: 1
+        - query: "SELECT COUNT(*) FROM order_lines WHERE order_id='O-1016'"
+          equals: 1
+        - query: "SELECT quantity FROM order_lines WHERE order_id='O-1016' AND sku='TEE-BLU-M'"
+          equals: 3
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TEE-BLU-M'"
+          equals: 19
+      reply_contains: ["75.00"]

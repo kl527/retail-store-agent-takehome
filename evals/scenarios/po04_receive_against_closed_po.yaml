@@ -1,0 +1,22 @@
+name: po04-receive-against-closed-po
+description: >
+  Once a PO is fully received it's closed — a second receive attempt against
+  it must be refused, not double-count the inventory.
+turns:
+  - user: "Order 10 Canvas Totes from Northwind, dated today."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM purchase_orders"
+          equals: 1
+  - user: "All 10 totes on that purchase order arrived — receive them, dated today."
+    expect:
+      sql:
+        - query: "SELECT status FROM purchase_orders LIMIT 1"
+          equals: received
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 14
+  - user: "Receive that purchase order again, dated today."
+    expect:
+      sql:
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 14

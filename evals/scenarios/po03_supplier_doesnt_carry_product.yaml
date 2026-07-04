@@ -1,0 +1,10 @@
+name: po03-supplier-doesnt-carry-product
+description: >
+  Pioneer Goods' catalog only covers totes and mugs — asking it to supply
+  hoodies must fail with no PO created, not silently substitute Northwind.
+turns:
+  - user: "Order 10 Gray Medium hoodies from Pioneer Goods, dated today."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM purchase_orders"
+          equals: 0

@@ -1,0 +1,18 @@
+name: rt07-full-multiline-order-return
+description: >
+  "Return everything from order O-1012" spans three lines (2 Gray-M hoodies,
+  2 Navy-M hoodies, 1 Gray-L hoodie) — the agent must resolve and process all
+  three, not just the first line it notices.
+turns:
+  - user: "Return everything from order O-1012, all in good condition, dated today."
+    expect:
+      sql:
+        - query: "SELECT COALESCE(SUM(refund_amount), 0) FROM returns WHERE order_id='O-1012'"
+          equals: 300.0
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='HOOD-GRY-M'"
+          equals: 11
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='HOOD-NVY-M'"
+          equals: 10
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='HOOD-GRY-L'"
+          equals: 8
+      reply_contains: ["120.00", "60.00"]

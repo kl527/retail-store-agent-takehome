@@ -39,6 +39,19 @@ def effective_unit_price(conn: sqlite3.Connection, sku: str, on_date: str) -> tu
     return best_price, best_promo
 
 
+def simulate_discount_price(conn: sqlite3.Connection, sku: str, percent_off_value) -> Decimal:
+    """Hypothetical price under an arbitrary percent-off — reads only, never persists.
+
+    For 'what would X cost if...' questions, so the model isn't tempted to
+    reach for create_promotion (which is real, persistent state) just to
+    answer a hypothetical.
+    """
+    row = conn.execute("SELECT retail_price FROM products WHERE sku = ?", (sku,)).fetchone()
+    if row is None:
+        raise DomainError(f"Unknown SKU: {sku}", sku=sku)
+    return percent_off(D(row["retail_price"]), percent_off_value)
+
+
 def create_promotion(
     conn: sqlite3.Connection,
     description: str,

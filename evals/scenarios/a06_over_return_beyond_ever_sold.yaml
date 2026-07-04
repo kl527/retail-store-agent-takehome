@@ -1,0 +1,14 @@
+name: a06-over-return-beyond-ever-sold
+description: >
+  Requesting 5 Navy Large hoodies back from O-1006 when only 2 were ever sold
+  on that line (not just "more than remains after a prior return" like v04,
+  but more than the line ever contained at all). Must refuse outright, not
+  silently process the 1 unit that happens to still be returnable.
+turns:
+  - user: "Sarah Chen is returning five Navy Large hoodies from order O-1006, good condition."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM returns"
+          equals: 1
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='HOOD-NVY-L'"
+          equals: 6

@@ -1,0 +1,23 @@
+name: pm01-category-wide-promo
+description: >
+  A category-scoped promotion ("everything in apparel") must cover both tees
+  and hoodies via scope_type='category', scope_ref='apparel' — not
+  scope_type='product' (which would only cover one product_id).
+turns:
+  - user: "Put everything in the apparel category on 15% off from 2026-06-20 to 2026-06-25."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM promotions WHERE scope_type='category' AND scope_ref='apparel' AND value=15"
+          equals: 1
+  - user: "Ring up one Classic Tee, Black Small, for a walk-in, cash, dated 2026-06-21."
+    expect:
+      sql:
+        - query: "SELECT unit_price FROM order_lines WHERE sku='TEE-BLK-S' AND order_id='O-1016'"
+          equals: 21.25
+      reply_contains: ["21.25"]
+  - user: "Ring up one Navy Medium hoodie for a walk-in, cash, dated 2026-06-21."
+    expect:
+      sql:
+        - query: "SELECT unit_price FROM order_lines WHERE sku='HOOD-NVY-M' AND order_id='O-1017'"
+          equals: 51.0
+      reply_contains: ["51.00"]

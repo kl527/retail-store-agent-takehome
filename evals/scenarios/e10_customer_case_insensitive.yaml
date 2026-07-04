@@ -1,0 +1,9 @@
+name: e10-customer-case-insensitive
+description: Odd casing/partial name in the customer reference must still resolve.
+turns:
+  - user: "sell one mug to sarah CHEN, card, dated today"
+    expect:
+      sql:
+        - query: "SELECT customer_id FROM orders WHERE order_id='O-1016'"
+          equals: C-001
+      reply_contains: ["12.00"]

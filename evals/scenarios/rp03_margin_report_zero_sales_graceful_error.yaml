@@ -1,0 +1,10 @@
+name: rp03-margin-report-zero-sales-graceful-error
+description: >
+  top_products_by_margin raises a DomainError when there are no sales in the
+  requested window (unlike revenue_report, which just returns zeros). The
+  agent must surface this gracefully — explain there's no data for that
+  period — rather than crashing or fabricating a products list.
+turns:
+  - user: "What were the top products by margin between 2026-04-01 and 2026-04-30?"
+    expect:
+      tool_called: ["top_products_by_margin"]

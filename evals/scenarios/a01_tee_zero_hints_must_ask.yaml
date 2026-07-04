@@ -1,0 +1,14 @@
+name: a01-tee-zero-hints-must-ask
+description: >
+  "A Classic Tee" with zero color/size hints matches 6 variants (2 colors x 3
+  sizes). Unlike p03 (hoodie narrowed to 2 by size), this is maximally
+  ambiguous — a model eager to be helpful may guess a "default" variant
+  (e.g. Blue Medium) instead of asking. It must ask.
+turns:
+  - user: "Ring up a Classic Tee for Sarah Chen, card, dated today."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM orders"
+          equals: 15
+      reply_contains: ["?"]
+      tool_not_called: ["ring_up_sale"]

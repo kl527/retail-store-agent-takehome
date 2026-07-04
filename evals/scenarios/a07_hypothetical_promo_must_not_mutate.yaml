@@ -1,0 +1,15 @@
+name: a07-hypothetical-promo-must-not-mutate
+description: >
+  A hypothetical "what would X cost if..." question must not create real
+  state. A model that conflates "figure out the price under a discount" with
+  "apply the discount" would wrongly call create_promotion (or ring_up_sale).
+turns:
+  - user: "What would a Gray Medium hoodie cost if I put all hoodies on 30% off?"
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM promotions"
+          equals: 1
+        - query: "SELECT COUNT(*) FROM orders"
+          equals: 15
+      reply_contains: ["42.00"]
+      tool_not_called: ["create_promotion", "ring_up_sale"]

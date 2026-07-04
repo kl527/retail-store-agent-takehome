@@ -1,0 +1,11 @@
+name: e07-direct-sku-reference
+description: A raw SKU in place of a product description should resolve directly.
+turns:
+  - user: "Sell TEE-BLK-L to a walk-in, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT quantity FROM order_lines WHERE order_id='O-1016' AND sku='TEE-BLK-L'"
+          equals: 1
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TEE-BLK-L'"
+          equals: 13
+      reply_contains: ["25.00"]

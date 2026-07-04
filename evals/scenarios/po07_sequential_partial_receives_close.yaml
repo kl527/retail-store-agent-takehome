@@ -1,0 +1,29 @@
+name: po07-sequential-partial-receives-close
+description: >
+  Two partial deliveries against the same PO — it must stay open after the
+  first (20 of 50) and close automatically only once the second brings it
+  to the full 50.
+turns:
+  - user: "A purchase order for 50 Canvas Totes from Northwind is open, dated today."
+    expect:
+      sql:
+        - query: "SELECT status FROM purchase_orders LIMIT 1"
+          equals: open
+  - user: "20 of those totes arrived — receive them, dated today."
+    expect:
+      sql:
+        - query: "SELECT qty_received FROM purchase_order_lines WHERE sku='TOTE'"
+          equals: 20
+        - query: "SELECT status FROM purchase_orders LIMIT 1"
+          equals: open
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 24
+  - user: "The remaining 30 totes on that purchase order just arrived — receive them, dated today."
+    expect:
+      sql:
+        - query: "SELECT qty_received FROM purchase_order_lines WHERE sku='TOTE'"
+          equals: 50
+        - query: "SELECT status FROM purchase_orders LIMIT 1"
+          equals: received
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 54

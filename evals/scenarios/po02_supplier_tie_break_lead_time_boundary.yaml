@@ -1,0 +1,28 @@
+name: po02-supplier-tie-break-lead-time-boundary
+description: >
+  Mugs (once low) are supplied by both Northwind ($5.00, 7 days) and Pioneer
+  ($4.50, 10 days) — Pioneer is cheaper AND its 10-day lead time is exactly
+  at the 10-day cutoff (inclusive), so Pioneer must win. This differs from
+  the tote case (p04), where Pioneer is cheaper but ineligible at 14 days.
+  Both mugs and totes should end up below reorder, producing two POs from
+  two different suppliers in one restock call.
+turns:
+  - user: "Sell nineteen Ceramic Mugs to a walk-in, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='MUG'"
+          equals: 11
+  - user: "Reorder anything that's below its reorder point, from the best supplier. Date it today."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM purchase_orders"
+          equals: 2
+        - query: "SELECT supplier_id FROM purchase_orders po JOIN purchase_order_lines l ON l.po_id = po.po_id WHERE l.sku = 'MUG'"
+          equals: SUP-PG
+        - query: "SELECT qty_ordered FROM purchase_order_lines WHERE sku='MUG'"
+          equals: 40
+        - query: "SELECT supplier_id FROM purchase_orders po JOIN purchase_order_lines l ON l.po_id = po.po_id WHERE l.sku = 'TOTE'"
+          equals: SUP-NW
+        - query: "SELECT qty_ordered FROM purchase_order_lines WHERE sku='TOTE'"
+          equals: 50
+      reply_contains: ["Pioneer", "Northwind"]

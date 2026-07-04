@@ -1,0 +1,11 @@
+name: e05-no-payment-method-defaults-cash
+description: >
+  User never states a payment method. The tool's own default is cash; the
+  agent should not invent 'card' out of nowhere.
+turns:
+  - user: "Ring up one Ceramic Mug for a walk-in, dated today."
+    expect:
+      sql:
+        - query: "SELECT payment_method FROM orders WHERE order_id='O-1016'"
+          equals: cash
+      reply_contains: ["12.00"]

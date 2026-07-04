@@ -1,0 +1,12 @@
+name: a09-typo-no-fabricated-match
+description: >
+  Misspelled product words ("Hoodei", "Meduim") won't token-match anything in
+  search_products. The agent must not guess a SKU anyway — it should report
+  no match or ask, not silently pick a hoodie.
+turns:
+  - user: "Ring up a Hoodei in Meduim for a walk-in, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM orders"
+          equals: 15
+      tool_not_called: ["ring_up_sale"]

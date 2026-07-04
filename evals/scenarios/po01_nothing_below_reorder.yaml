@@ -1,0 +1,23 @@
+name: po01-nothing-below-reorder
+description: >
+  First top off the one item that's actually low (totes), then ask to
+  reorder again — nothing should qualify the second time, so no new PO.
+turns:
+  - user: "Reorder anything that's below its reorder point, from the best supplier. Date it today."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM purchase_orders"
+          equals: 1
+      reply_contains: ["Northwind"]
+  - user: "The 50 totes just arrived — receive them, dated today."
+    expect:
+      sql:
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 54
+  - user: "Now check again — reorder anything below its reorder point."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM purchase_orders"
+          equals: 1
+      tool_called: ["restock_below_reorder"]
+      tool_not_called: ["create_purchase_order"]

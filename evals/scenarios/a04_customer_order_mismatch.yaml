@@ -1,0 +1,17 @@
+name: a04-customer-order-mismatch
+description: >
+  process_return has no customer_id parameter at all — the tool would happily
+  process this return regardless of whose name is attached, since O-1006
+  actually belongs to Sarah Chen (C-001), not Priya Patel. The agent must
+  notice the mismatch (via get_order) and hold off, flagging it rather than
+  silently proceeding as if nothing were odd — per system-prompt rule 10.
+turns:
+  - user: "Priya Patel wants to return the Navy Large hoodie from order O-1006, good condition."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM returns"
+          equals: 1
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='HOOD-NVY-L'"
+          equals: 6
+      reply_contains: ["C-001"]
+      tool_not_called: ["process_return"]

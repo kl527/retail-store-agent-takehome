@@ -1,0 +1,11 @@
+name: e13-quantity-word-half-dozen
+description: "'Half a dozen' must resolve to quantity 6."
+turns:
+  - user: "Ring up half a dozen Ceramic Mugs for a walk-in, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT quantity FROM order_lines WHERE order_id='O-1016' AND sku='MUG'"
+          equals: 6
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='MUG'"
+          equals: 24
+      reply_contains: ["72.00"]

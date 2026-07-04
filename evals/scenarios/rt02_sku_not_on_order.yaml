@@ -1,0 +1,12 @@
+name: rt02-sku-not-on-order
+description: >
+  O-1004 only ever sold one Gray Medium hoodie — no Canvas Tote line exists
+  on it. Must refuse rather than inventing a line to refund.
+turns:
+  - user: "Priya Patel is returning the Canvas Tote from order O-1004, good condition."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM returns"
+          equals: 1
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 4

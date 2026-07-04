@@ -1,0 +1,11 @@
+name: e08-product-id-reference
+description: A raw product_id (single-variant product) should resolve unambiguously.
+turns:
+  - user: "Sell one P-TOTE to a walk-in, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT quantity FROM order_lines WHERE order_id='O-1016' AND sku='TOTE'"
+          equals: 1
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 3
+      reply_contains: ["18.00"]

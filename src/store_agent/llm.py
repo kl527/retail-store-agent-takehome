@@ -24,8 +24,15 @@ class ChatClient:
         )
 
     def complete(self, messages: list[dict], tools: list[dict]) -> dict:
-        """One chat-completions call; returns the assistant message dict."""
-        payload = {"model": self.model, "messages": messages}
+        """One chat-completions call; returns the assistant message dict.
+
+        temperature=0: this agent follows frozen business rules, not creative
+        writing — the same instruction should produce the same tool calls
+        every time. Eval reruns showed real run-to-run drift on identical
+        prompts (e.g. sometimes stopping to confirm before creating a PO the
+        user explicitly described, sometimes not) with the default sampling.
+        """
+        payload = {"model": self.model, "messages": messages, "temperature": 0}
         if tools:  # some providers reject an empty tools array
             payload["tools"] = tools
             payload["tool_choice"] = "auto"

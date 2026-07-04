@@ -1,0 +1,20 @@
+name: rt05-return-via-customer-name-only
+description: >
+  No order id given at all — the agent must look up Marcus Reed's orders
+  (list_orders / get_order) to find which order the mug came from before it
+  can call process_return, which requires an order_id.
+turns:
+  - user: "Ring up one Ceramic Mug for Marcus Reed, card, dated today."
+    expect:
+      sql:
+        - query: "SELECT customer_id FROM orders WHERE order_id='O-1016'"
+          equals: C-002
+      reply_contains: ["O-1016"]
+  - user: "Marcus wants to return the mug he just bought — it's in good condition."
+    expect:
+      sql:
+        - query: "SELECT order_id FROM returns WHERE order_id='O-1016' AND sku='MUG'"
+          equals: O-1016
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='MUG'"
+          equals: 30
+      reply_contains: ["12.00"]

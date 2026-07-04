@@ -1,0 +1,13 @@
+name: e11-relative-date-yesterday
+description: >
+  "Yesterday" relative to today (2026-06-19) must resolve to 2026-06-18, not
+  today and not some other date.
+turns:
+  - user: "Ring up two Canvas Totes for a walk-in, cash, dated yesterday."
+    expect:
+      sql:
+        - query: "SELECT order_date FROM orders WHERE order_id='O-1016'"
+          equals: 2026-06-18
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 2
+      reply_contains: ["36.00"]

@@ -1,0 +1,24 @@
+name: mm05-two-dimension-clarification
+description: >
+  "A Classic Tee" with no color or size gives 6 candidates. The follow-up
+  answer supplies both missing dimensions at once ("Black, Large") — the
+  agent must combine them with the earlier request (customer, payment,
+  date) rather than losing that context and asking again.
+turns:
+  - user: "Ring up a Classic Tee for Tom Becker, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM orders"
+          equals: 15
+      reply_contains: ["?"]
+      tool_not_called: ["ring_up_sale"]
+  - user: "Black, Large."
+    expect:
+      sql:
+        - query: "SELECT customer_id FROM orders WHERE order_id='O-1016'"
+          equals: C-004
+        - query: "SELECT sku FROM order_lines WHERE order_id='O-1016'"
+          equals: TEE-BLK-L
+        - query: "SELECT payment_method FROM orders WHERE order_id='O-1016'"
+          equals: cash
+      reply_contains: ["O-1016"]

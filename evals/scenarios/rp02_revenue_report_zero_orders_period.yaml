@@ -1,0 +1,9 @@
+name: rp02-revenue-report-zero-orders-period
+description: >
+  April 2026 has no orders at all in the seed. revenue_report must not crash
+  or hallucinate a number — it should report zero gross/net revenue cleanly.
+turns:
+  - user: "What was our revenue between 2026-04-01 and 2026-04-30?"
+    expect:
+      reply_contains: ["0.00"]
+      tool_called: ["revenue_report"]

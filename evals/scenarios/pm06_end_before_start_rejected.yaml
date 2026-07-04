@@ -1,0 +1,8 @@
+name: pm06-end-before-start-rejected
+description: An end_date earlier than the start_date is invalid and must be rejected.
+turns:
+  - user: "Put all hoodies on 20% off from 2026-06-25 to 2026-06-20."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM promotions"
+          equals: 1

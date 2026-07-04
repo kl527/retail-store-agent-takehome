@@ -1,0 +1,9 @@
+name: e09-customer-email-lookup
+description: Customer referenced only by email must resolve to the right customer_id.
+turns:
+  - user: "Ring up one pair of wool socks for marcus.reed@example.com, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT customer_id FROM orders WHERE order_id='O-1016'"
+          equals: C-002
+      reply_contains: ["9.00"]

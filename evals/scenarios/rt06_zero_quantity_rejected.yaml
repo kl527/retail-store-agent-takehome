@@ -1,0 +1,10 @@
+name: rt06-zero-quantity-rejected
+description: A return of zero units is nonsensical and must be rejected, not recorded.
+turns:
+  - user: "Sarah Chen is returning zero Navy Large hoodies from order O-1006, good condition."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM returns"
+          equals: 1
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='HOOD-NVY-L'"
+          equals: 6

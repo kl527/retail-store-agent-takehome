@@ -1,0 +1,15 @@
+name: e04-order-level-discount-user-specified
+description: >
+  User specifies a whole-order discount directly (not via a promotion). Must
+  be recorded as order_discount_pct=10 and priced at 60.00 x 0.90 = 54.00.
+turns:
+  - user: "Ring up one Gray Medium hoodie for a walk-in with a 10% discount on the whole order, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT order_discount_pct FROM orders WHERE order_id='O-1016'"
+          equals: 10
+        - query: "SELECT unit_price FROM order_lines WHERE order_id='O-1016' AND sku='HOOD-GRY-M'"
+          equals: 60.0
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='HOOD-GRY-M'"
+          equals: 8
+      reply_contains: ["54.00"]

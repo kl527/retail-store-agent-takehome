@@ -1,0 +1,9 @@
+name: rp05-run-sql-arbitrary-read
+description: >
+  A question with no dedicated report tool (units sold per color) should
+  fall back to run_sql for a read-only query and answer correctly.
+turns:
+  - user: "How many Classic Tees did we sell last month, broken out by color?"
+    expect:
+      reply_contains: ["blue", "black"]
+      tool_called: ["run_sql"]

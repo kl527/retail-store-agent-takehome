@@ -1,0 +1,13 @@
+name: a10-multi-intent-single-turn
+description: >
+  One message bundles two distinct asks (a sale, then a stock question). A
+  model that only handles the first clause and drops the second is a common
+  agentic failure mode.
+turns:
+  - user: "Ring up two Canvas Totes for a walk-in, cash, dated today, and also tell me what's about to stock out."
+    expect:
+      sql:
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 2
+      reply_contains: ["tote"]
+      tool_called: ["ring_up_sale", "stockout_report"]

@@ -1,0 +1,8 @@
+name: pm04-invalid-percent-zero-rejected
+description: A 0% "discount" is not a valid promotion (must be in (0, 100]) and must not be created.
+turns:
+  - user: "Put all hoodies on 0% off from 2026-06-20 to 2026-06-22."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM promotions"
+          equals: 1

@@ -55,6 +55,11 @@ def _get_price_quote(conn, sku, date=TODAY):
     }
 
 
+def _simulate_discount_price(conn, sku, percent_off):
+    price = pricing.simulate_discount_price(conn, sku, percent_off)
+    return {"sku": sku, "percent_off": percent_off, "hypothetical_price": money_str(price)}
+
+
 def _run_sql(conn, query):
     stripped = query.strip().rstrip(";").strip()
     if not stripped.lower().startswith(("select", "with")):
@@ -193,9 +198,14 @@ TOOLS: list[dict] = [
             "description": (
                 "Return units from a past order. Refunds the price actually paid on that order "
                 "(never the current list price). condition='good' restocks the units; 'damaged' "
-                "does not. Rejects returning more than was sold minus already returned. Pass the "
-                "quantity the user asked for — if it exceeds what remains returnable, do NOT "
-                "process a smaller quantity instead; report the limit and ask the user first."
+                "does not — this materially changes the outcome, so if the user hasn't stated the "
+                "condition, ask before calling this tool; never default to 'good'. Rejects "
+                "returning more than was sold minus already returned. Pass the quantity the user "
+                "asked for — if it exceeds what remains returnable, do NOT process a smaller "
+                "quantity instead; report the limit and ask the user first. For a bulk 'return "
+                "everything from order X' request, call get_order first, then call this tool once "
+                "per line using the skus and quantities it shows — that's a complete, unambiguous "
+                "spec, so proceed without asking again (still ask about condition if unstated)."
             ),
             "parameters": {
                 "type": "object",
@@ -235,7 +245,11 @@ TOOLS: list[dict] = [
                 "Create a purchase order for specific items from a specific supplier (use "
                 "restock_below_reorder for rule-based restocking). supplier_id accepts an id "
                 "('SUP-NW') or an unambiguous supplier name ('Northwind'). Unit costs come from "
-                "the supplier's catalog."
+                "the supplier's catalog. If the user describes a PO as if it already exists (e.g. "
+                "'a PO for 50 totes from Northwind is open') and list_purchase_orders shows no such "
+                "PO, call this tool immediately with exactly the details given, then continue (e.g. "
+                "receive against it) — do not stop to ask the user to confirm creating it first; "
+                "they already told you what to create."
             ),
             "parameters": {
                 "type": "object",
@@ -268,7 +282,10 @@ TOOLS: list[dict] = [
             "description": (
                 "Book a delivery against an open purchase order: adds the units to inventory. "
                 "Pass receipts for a partial delivery (e.g. 40 of 50 arrived); omit receipts to "
-                "receive everything outstanding. The PO closes automatically when complete."
+                "receive everything outstanding. The PO closes automatically when complete. If the "
+                "user's phrasing doesn't identify which PO (e.g. 'the shipment arrived' while more "
+                "than one PO is open), call list_purchase_orders and ask which one — do not guess "
+                "by receiving every open PO unless the user clearly means all of them."
             ),
             "parameters": {
                 "type": "object",
@@ -294,11 +311,15 @@ TOOLS: list[dict] = [
         "schema": {
             "name": "create_promotion",
             "description": (
-                "Create a percent-off promotion. scope_type='product' with scope_ref = product_id "
-                "covers ALL variants of one product — e.g. 'all hoodies' means P-HOOD, NOT the "
-                "apparel category. Use scope_type='category' (scope_ref 'apparel' or 'goods') only "
-                "when the user names a whole category. Start/end dates are inclusive. Promotions "
-                "never change past sales; overlapping promotions don't stack — the lower price wins."
+                "Create a REAL, persistent percent-off promotion. Only call this when the user is "
+                "actually instructing you to set up or apply a promotion. Never call it just to "
+                "answer a hypothetical 'what would X cost if...' question — use "
+                "simulate_discount_price for those instead. scope_type='product' with scope_ref = "
+                "product_id covers ALL variants of one product — e.g. 'all hoodies' means P-HOOD, "
+                "NOT the apparel category. Use scope_type='category' (scope_ref 'apparel' or "
+                "'goods') only when the user names a whole category. Start/end dates are inclusive. "
+                "Promotions never change past sales; overlapping promotions don't stack — the lower "
+                "price wins."
             ),
             "parameters": {
                 "type": "object",
@@ -328,6 +349,28 @@ TOOLS: list[dict] = [
                 "type": "object",
                 "properties": {"sku": {"type": "string"}, "date": _DATE},
                 "required": ["sku"],
+            },
+        },
+    },
+    {
+        "handler": _simulate_discount_price,
+        "schema": {
+            "name": "simulate_discount_price",
+            "description": (
+                "Compute a HYPOTHETICAL price for a SKU under an arbitrary percent-off, without "
+                "creating or changing anything — records nothing. Use this for 'what would X cost "
+                "if we put it on Y% off' questions. It answers only the hypothetical asked (it does "
+                "not layer on top of other active promotions). To actually set up a discount for "
+                "real, use create_promotion instead — never call create_promotion just to answer a "
+                "hypothetical."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "sku": {"type": "string"},
+                    "percent_off": {"type": "number"},
+                },
+                "required": ["sku", "percent_off"],
             },
         },
     },

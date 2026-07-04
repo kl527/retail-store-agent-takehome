@@ -1,0 +1,12 @@
+name: a05-bare-revenue-gross-vs-net
+description: >
+  A bare "what was our revenue" question, with no mention of refunds, should
+  be answered with gross revenue (1786.20) per rule 6 — "revenue" and "net
+  revenue" (a.k.a. revenue kept) are distinct terms. A model that reflexively
+  nets out the one seed refund without being asked would answer 1732.20
+  instead, conflating the two.
+turns:
+  - user: "What was our revenue last month?"
+    expect:
+      reply_contains: ["1786.20"]
+      tool_called: ["revenue_report"]

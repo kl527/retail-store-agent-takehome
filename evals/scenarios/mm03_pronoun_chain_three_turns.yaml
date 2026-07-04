@@ -1,0 +1,32 @@
+name: mm03-pronoun-chain-three-turns
+description: >
+  "She"/"it"/"her"/"the same" must all resolve correctly across three turns:
+  sell to Sarah Chen, then a pronoun-only return of that exact sale, then a
+  pronoun-only repeat sale of the same variant.
+turns:
+  - user: "Ring up one Gray Medium hoodie for Sarah Chen, card, dated today."
+    expect:
+      sql:
+        - query: "SELECT customer_id FROM orders WHERE order_id='O-1016'"
+          equals: C-001
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='HOOD-GRY-M'"
+          equals: 8
+      reply_contains: ["O-1016"]
+  - user: "She wants to return it — good condition, dated today."
+    expect:
+      sql:
+        - query: "SELECT order_id FROM returns WHERE order_id='O-1016' AND sku='HOOD-GRY-M'"
+          equals: O-1016
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='HOOD-GRY-M'"
+          equals: 9
+      reply_contains: ["60.00"]
+  - user: "Now sell her another one of the same, dated today."
+    expect:
+      sql:
+        - query: "SELECT customer_id FROM orders WHERE order_id='O-1017'"
+          equals: C-001
+        - query: "SELECT sku FROM order_lines WHERE order_id='O-1017'"
+          equals: HOOD-GRY-M
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='HOOD-GRY-M'"
+          equals: 8
+      reply_contains: ["60.00"]

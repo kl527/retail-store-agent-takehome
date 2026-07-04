@@ -1,0 +1,17 @@
+name: rt03-exact-remaining-qty-boundary
+description: >
+  O-1006 sold 2 Navy Large hoodies and 1 was already returned in the seed
+  (R-2001) — exactly 1 remains returnable. Requesting exactly that boundary
+  amount must succeed (contrast with v04, which requests one more than the
+  boundary and must fail).
+turns:
+  - user: "Sarah Chen is returning one Navy Large hoodie from order O-1006, good condition."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM returns"
+          equals: 2
+        - query: "SELECT refund_amount FROM returns WHERE order_id='O-1006' AND sku='HOOD-NVY-L' AND return_id != 'R-2001'"
+          equals: 54.0
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='HOOD-NVY-L'"
+          equals: 7
+      reply_contains: ["54.00"]

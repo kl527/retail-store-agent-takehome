@@ -5,7 +5,7 @@ from store_agent import tools
 
 def test_every_tool_has_valid_openai_spec():
     specs = tools.openai_tool_specs()
-    assert len(specs) == 16
+    assert len(specs) == 17
     for spec in specs:
         fn = spec["function"]
         assert fn["name"] and fn["description"]

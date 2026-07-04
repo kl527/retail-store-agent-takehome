@@ -1,0 +1,25 @@
+name: pm02-overlapping-lower-price-wins-even-if-less-specific
+description: >
+  Two overlapping promotions on the same date: a broad 15% category-wide
+  apparel sale and a narrower 10% product-specific hoodie sale. Rule 5 says
+  the LOWER RESULTING PRICE wins, with no stacking — that's the 15% category
+  discount (51.00), even though the product-level promo is more "specific".
+  A model that assumes "more specific overrides general" would wrongly pick
+  the 10% promo (54.00) instead.
+turns:
+  - user: "Put everything in the apparel category on 15% off from 2026-06-20 to 2026-06-25."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM promotions WHERE scope_type='category'"
+          equals: 1
+  - user: "Also put hoodies specifically on 10% off from 2026-06-20 to 2026-06-25."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM promotions WHERE scope_type='product' AND scope_ref='P-HOOD'"
+          equals: 1
+  - user: "Ring up one Gray Medium hoodie for a walk-in, cash, dated 2026-06-22, and tell me the price."
+    expect:
+      sql:
+        - query: "SELECT unit_price FROM order_lines WHERE sku='HOOD-GRY-M' AND order_id='O-1016'"
+          equals: 51.0
+      reply_contains: ["51.00"]

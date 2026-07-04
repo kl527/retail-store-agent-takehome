@@ -1,0 +1,13 @@
+name: a02-negation-narrows-still-ambiguous
+description: >
+  "Not the navy one" eliminates HOOD-NVY-M/L, narrowing to Gray — but Gray
+  still has M and L. A model that treats negation as a full resolution (and
+  picks e.g. Gray Medium by default) fails; it must still ask about size.
+turns:
+  - user: "Ring up a hoodie for Sarah Chen, card, dated today — not the navy one."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM orders"
+          equals: 15
+      reply_contains: ["?"]
+      tool_not_called: ["ring_up_sale"]

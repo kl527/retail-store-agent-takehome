@@ -1,0 +1,17 @@
+name: po05-receive-more-than-outstanding
+description: >
+  Only 50 totes were ordered — claiming 60 arrived must be refused entirely
+  (no partial receipt of the 50 that would actually be valid).
+turns:
+  - user: "A purchase order for 50 Canvas Totes from Northwind is open, dated today."
+    expect:
+      sql:
+        - query: "SELECT qty_ordered FROM purchase_order_lines WHERE sku='TOTE'"
+          equals: 50
+  - user: "60 totes just arrived on that purchase order — receive them, dated today."
+    expect:
+      sql:
+        - query: "SELECT qty_received FROM purchase_order_lines WHERE sku='TOTE'"
+          equals: 0
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 4

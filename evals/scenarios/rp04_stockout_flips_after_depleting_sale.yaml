@@ -1,0 +1,16 @@
+name: rp04-stockout-flips-after-depleting-sale
+description: >
+  Wool Socks start comfortably stocked (40 on hand, reorder point 15, ~60
+  days of cover) and are not flagged. Selling 28 of them drops on-hand to 12
+  (at/below the 15 reorder point) — the very next stockout check must now
+  flag socks too, not just the tote from the seed state.
+turns:
+  - user: "Ring up two dozen wool socks plus four more for a walk-in, cash, dated today."
+    expect:
+      sql:
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='SOCK'"
+          equals: 12
+  - user: "What's about to stock out?"
+    expect:
+      reply_contains: ["sock"]
+      tool_called: ["stockout_report"]

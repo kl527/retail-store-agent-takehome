@@ -1,0 +1,15 @@
+name: rt04-missing-condition-must-ask
+description: >
+  condition (good/damaged) changes both the refund bookkeeping and whether
+  stock is restocked — the user never stated it, so the agent must ask
+  rather than assuming 'good'.
+turns:
+  - user: "Sarah Chen is returning the Canvas Tote from order O-1006."
+    expect:
+      sql:
+        - query: "SELECT COUNT(*) FROM returns"
+          equals: 1
+        - query: "SELECT on_hand_qty FROM inventory WHERE sku='TOTE'"
+          equals: 4
+      reply_contains: ["?"]
+      tool_not_called: ["process_return"]
